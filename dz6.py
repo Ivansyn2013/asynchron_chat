@@ -7,7 +7,7 @@ with open('tmp.txt', 'w') as file:
         file.write(word + '\n')
 
 with open('tmp.txt', 'rb') as file:
-    ENCODING =detect(file.readline())['encoding']
+    ENCODING = detect(file.readline())['encoding']
     print('Кодировка по цмолчанию ' + ENCODING)
     data = file.read()
     data = data.decode(ENCODING)
