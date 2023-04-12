@@ -69,12 +69,16 @@ def server_start():
         print(Fore.GREEN + 'App is started' + Fore.RESET)
         client, client_ip = server_socket.accept()
         time_str = time.ctime(time.time()) + "\n"
-        print(
-            Fore.YELLOW + f'Connection from {client_ip} is accepted' + Fore.RESET)
-        client.send(AppConfig.APP_WELCOME_MESS.encode(AppConfig.APP_ENCODING))
-        client.send(time_str.encode('ascii'))
-        client.close()
 
+        try:
+            message = get_message(client)
+            print(f'Сообщение пользователя: {message}')
+            responce = valid_message(message)
+            send_message(client, responce)
+            client.close()
+        except (ValueError, json.JSONDecodeError):
+            print('Получено некорректное сообщение')
+            client.close()
 
 if __name__ == "__main__":
     server_start()
