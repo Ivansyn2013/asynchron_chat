@@ -42,7 +42,7 @@ def client_connect():
 
     try:
         if '-a' in sys.argv:
-            IP = int(sys.argv[sys.argv.index('-a') + 1])
+            IP = str(sys.argv[sys.argv.index('-a') + 1])
         else:
             IP = AppConfig.APP_ADR
 
@@ -62,7 +62,6 @@ def client_connect():
 
     client_socket = socket(AF_INET, SOCK_STREAM)
     client_socket.connect((IP, PORT))
-    package = client_socket.recv(AppConfig.APP_MAX_MESS_SIZE)
     message = client_active()
     send_message(client_socket, message)
     try:

@@ -44,7 +44,7 @@ def server_start():
     '''Start servet app'''
     try:
         if '-a' in sys.argv:
-            IP = int(sys.argv[sys.argv.index('-a') + 1])
+            IP = str(sys.argv[sys.argv.index('-a') + 1])
         else:
             IP = AppConfig.APP_ADR
     except (IndexError, ValueError) as error:
