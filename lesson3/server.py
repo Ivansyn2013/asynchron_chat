@@ -6,6 +6,18 @@ from colorama import Fore
 import json
 
 
+def valid_message(message):
+    '''check message on conformity
+    :param get message from client
+    :retun dict'''
+    if 'action' in message and message['action'] == 'presence' and 'time' in \
+            message and 'user' in message:
+        if message['user'] not in AppConfig.APP_AUTH_USERS:
+            return {'response': 403,
+                    'error': 'Not authorized'}
+        return {'response':200}
+    return {'response': 400,
+            'error': 'Bad request'}
 def get_message(client):
     '''get message from client in serrialize it
     :return responce'''
