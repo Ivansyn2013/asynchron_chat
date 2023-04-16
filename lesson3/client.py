@@ -1,7 +1,6 @@
 from socket import *
-from config import AppConfig
 import time
-from config import AppConfig
+from lesson3.config import AppConfig
 import sys
 import json
 def get_message(client):
