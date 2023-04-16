@@ -1,7 +1,7 @@
 import sys
 from socket import *
 import time
-from config import AppConfig
+from lesson3.config import AppConfig
 from colorama import Fore
 import json
 
