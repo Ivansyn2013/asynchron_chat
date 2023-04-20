@@ -1,6 +1,6 @@
 from socket import *
 import time
-from lesson3.config import AppConfig
+from config import AppConfig
 import sys
 import json
 import logging
