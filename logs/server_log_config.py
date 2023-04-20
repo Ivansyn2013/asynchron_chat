@@ -1,10 +1,10 @@
 import logging
 import logging.handlers
 
+server_format_log = logging.Formatter(
+    '%(asctime)s %(levelname)s %(filename)s %(message)s')
 
-server_format_log = logging.Formatter('%(asctime)s %(levelname)s %(filename)s %(message)s')
-
-file_path = './server.log'
+file_path = '../logs/server.log'
 
 server_handler_log = logging.StreamHandler()
 server_handler_log.setFormatter(server_format_log)
@@ -16,7 +16,7 @@ server_file_handler = logging.handlers.TimedRotatingFileHandler(file_path,
                                                                 when='D')
 server_file_handler.setFormatter(server_format_log)
 
-server_loger = logging.getLogger('server_loger')
+server_loger = logging.getLogger('server_logger')
 server_loger.setLevel(logging.DEBUG)
 server_loger.addHandler(server_file_handler)
 server_loger.addHandler(server_handler_log)

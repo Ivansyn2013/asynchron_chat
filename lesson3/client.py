@@ -3,6 +3,10 @@ import time
 from lesson3.config import AppConfig
 import sys
 import json
+import logging
+import logs.client_log_config
+
+log = logging.getLogger('client_logger')
 def get_message(client):
     '''get message from client in serrialize it
     :return responce'''
@@ -17,11 +21,14 @@ def get_message(client):
 def send_message(work_socket, message):
     '''encoding and sending messages
     :return'''
+    log.debug('Отправка сообщения серверу')
     json_message = json.dumps(message)
     package = json_message.encode(AppConfig.APP_ENCODING)
     work_socket.send(package)
 def client_active(user_name='Guest'):
     '''send online message to server '''
+
+    log.debug('Создание сообщения серверу')
     responce = AppConfig.APP_JIM_DICT
     responce['action'] = 'presence'
     responce['time'] = time.time()
@@ -32,7 +39,9 @@ def valid_server_message(message):
     '''check message on conformity'''
     if 'responce' in message:
         if message['responce'] == 200:
+            log.info('Ответ сервера - ОК')
             return '200: ok'
+        log.info('Отказ сервера')
         return f'400 : {message["error"]}'
     raise ValueError
 
@@ -46,7 +55,7 @@ def client_connect():
             IP = AppConfig.APP_ADR
 
     except (IndexError, ValueError) as error:
-        print(f'Ошибка в указанных аргументиах {error}')
+        log.error(f'Ошибка в указанных аргументиах {error}')
 
     try:
         if '-p' in sys.argv:
@@ -57,7 +66,7 @@ def client_connect():
             PORT = AppConfig.APP_PORT
 
     except (IndexError, ValueError) as error:
-        print(f'Ошибка в указанных аргументах {error}')
+        log.error(f'Ошибка в указанных аргументах {error}')
 
     client_socket = socket(AF_INET, SOCK_STREAM)
     client_socket.connect((IP, PORT))
@@ -65,9 +74,9 @@ def client_connect():
     send_message(client_socket, message)
     try:
         responce = get_message(client_socket)
-        print(f'Ответ сервера: {responce}')
+        log.info(f'Ответ сервера: {responce}')
     except (ValueError, json.JSONDecodeError):
-        print('Ошибка отправки сообщения')
+        log.error('Ошибка отправки сообщения')
 
 if __name__ == "__main__":
     client_connect()
