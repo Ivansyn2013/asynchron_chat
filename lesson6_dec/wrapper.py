@@ -1,4 +1,6 @@
 import logging
+import sys
+
 import logs.client_log_config
 import logs.server_log_config
 from datetime import datetime
@@ -7,7 +9,8 @@ import  inspect
 from functools import wraps
 class Logs:
     def __init__(self):
-        if self.__module__ == 'server.py':
+        test = sys.argv[0]
+        if sys.argv[0].find('client') == -1:
             self.logger = logging.getLogger('server_logger')
         else:
             self.logger = logging.getLogger('client_logger')

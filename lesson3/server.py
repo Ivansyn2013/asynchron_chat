@@ -37,7 +37,7 @@ def get_message(client):
         raise ValueError
     raise ValueError
 
-
+@Logs()
 def send_message(work_socket, message):
     '''encoding and sending messages
     :return'''
