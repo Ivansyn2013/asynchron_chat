@@ -5,8 +5,10 @@ import sys
 import json
 import logging
 import logs.client_log_config
+from lesson6_dec import Logs
 
 log = logging.getLogger('client_logger')
+@Logs()
 def get_message(client):
     '''get message from client in serrialize it
     :return responce'''
@@ -18,6 +20,8 @@ def get_message(client):
             return responce
         raise ValueError
     raise ValueError
+
+@Logs()
 def send_message(work_socket, message):
     '''encoding and sending messages
     :return'''
@@ -34,7 +38,7 @@ def client_active(user_name='Guest'):
     responce['time'] = time.time()
     responce['user'] = user_name
     return responce
-
+@Logs()
 def valid_server_message(message):
     '''check message on conformity'''
     if 'responce' in message:
@@ -45,6 +49,7 @@ def valid_server_message(message):
         return f'400 : {message["error"]}'
     raise ValueError
 
+@Logs()
 def client_connect():
     '''connet to server'''
 

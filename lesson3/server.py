@@ -5,6 +5,7 @@ from lesson3.config import AppConfig
 from colorama import Fore
 import json
 import logging
+from lesson6_dec import Logs
 import logs.server_log_config
 
 log = logging.getLogger('server_logger')
@@ -46,7 +47,7 @@ def send_message(work_socket, message):
     work_socket.send(package)
 
 
-
+@Logs()
 def server_start():
     '''Start servet app'''
 
