@@ -8,6 +8,9 @@ import logs.client_log_config
 from lesson6_dec import Logs
 
 log = logging.getLogger('client_logger')
+
+def slots_fun():
+    pass
 @Logs()
 def get_message(client):
     '''get message from client in serrialize it
