@@ -83,6 +83,15 @@ def client_connect():
     try:
         responce = get_message(client_socket)
         log.info(f'Ответ сервера: {responce}')
+        while True:
+            mess_body = str(input('Ваше сообщение: '))
+            if mess_body == 'exit':
+                break
+            message['body'] = mess_body
+            send_message(client_socket, message)
+            responce = get_message(client_socket)
+            print((f"Сервер : {responce['body']}"))
+
     except (ValueError, json.JSONDecodeError):
         log.error('Ошибка отправки сообщения')
 

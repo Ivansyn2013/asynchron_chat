@@ -11,5 +11,6 @@ class AppConfig():
                     'user':'',
                     'account_name':'',
                     'response':'',
+                    'body':'',
                     'error':'',
                     }
