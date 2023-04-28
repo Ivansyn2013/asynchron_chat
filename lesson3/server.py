@@ -117,15 +117,13 @@ def server_start(mode='default'):
         finally:
             time_str = time.ctime(time.time()) + "\n"
 #            log.debug(f'Соединение с клиентом {client_ip}')
-            wait = 0
+            wait = 1
             clients_read = []
             clients_write = []
             try:
-                message = get_message(client)
-                log.info(f'Сообщение пользователя: {message}')
-                responce = valid_message(message)
-                send_message(client, responce)
                 clients_read, clients_write, errors = select.select(all_clients, all_clients, [], wait)
+
+                ###
 
                 requests = client_query(clients_read, all_clients)
                 print(requests)

@@ -90,7 +90,8 @@ def client_connect():
             message['body'] = mess_body
             send_message(client_socket, message)
             responce = get_message(client_socket)
-            print((f"Сервер : {responce['body']}"))
+            if 'body' in responce:
+                print((f"Сервер : {responce['body']}"))
 
     except (ValueError, json.JSONDecodeError):
         log.error('Ошибка отправки сообщения')
