@@ -11,6 +11,15 @@ from colorama import Fore
 
 log = logging.getLogger('client_logger')
 
+def create_user(username):
+    """Функция генерирует запрос о присутствии клиента"""
+    responce = AppConfig.APP_JIM_DICT
+    responce['action'] = 'presence'
+    responce['time'] = time.time()
+    responce['user'] = username
+
+    log.debug(f'Сформировано {responce} сообщение для пользователя {username}')
+    return responce
 
 def message_from_server(client_socket, username):
     while True:
@@ -61,22 +70,26 @@ def get_message(client, username='Guest'):
 
 
 @Logs()
-def send_message(work_socket, message, username='Guest', destination='server'):
+def send_message(work_socket, message, username='Guest', destination=None):
     '''encoding and sending messages
     :return'''
     log.debug('Отправка сообщения серверу')
+    if destination == 'server':
+        json_message = json.dumps(message)
+        package = json_message.encode(AppConfig.APP_ENCODING)
+        work_socket.send(package)
+    else:
+        responce = AppConfig.APP_JIM_DICT
+        responce['action'] = 'message'
+        responce['time'] = time.time()
+        responce['user'] = username
+        responce['body'] = message
+        responce['sender'] = username
+        responce['destination'] = destination
 
-    responce = AppConfig.APP_JIM_DICT
-    responce['action'] = 'message'
-    responce['time'] = time.time()
-    responce['user'] = username
-    responce['body'] = message
-    responce['sender'] = username
-    responce['destination'] = destination
-
-    json_message = json.dumps(responce)
-    package = json_message.encode(AppConfig.APP_ENCODING)
-    work_socket.send(package)
+        json_message = json.dumps(responce)
+        package = json_message.encode(AppConfig.APP_ENCODING)
+        work_socket.send(package)
 
 
 def client_active(user_name='Guest'):
@@ -133,6 +146,8 @@ def client_connect():
         # message = client_active()
         # send_message(client_socket, message)
         user_name = input("Введите имя пользователя:")
+        present_message = create_user(user_name)
+        send_message(client_socket, username=user_name, message=present_message, destination='server')
         try:
             receiver = threading.Thread(target=message_from_server, args=(client_socket, user_name))
             receiver.daemon = True
