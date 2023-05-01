@@ -5,11 +5,12 @@ from lesson3.config import AppConfig
 from colorama import Fore
 import json
 import logging
-from lesson6_dec import Logs
+from lesson6_dec.wrapper import Logs
 import select
 import logs.server_log_config
 
 log = logging.getLogger('server_logger')
+
 
 def write_client_query(requests, clients_write, all_clients):
     for sock in clients_write:
@@ -23,17 +24,25 @@ def write_client_query(requests, clients_write, all_clients):
                 sock.close()
                 all_clients.remove(sock)
 
+
 def client_query(read_clients, all_clients):
+    '''
+    Find clients who write something in all clients
+    :param read_clients:
+    :param all_clients:
+    :return:
+    '''
     responce = {}
 
     for sock in read_clients:
-      try:
-          data = sock.recv(1024).decode('utf-8')
-          responce[sock] = data
-      except Exception:
-          log.warning(f"Клиент {sock.fileno()} {sock.getpeername()} отключился")
-          all_clients.remove(sock)
-    return  responce
+        try:
+            data = sock.recv(1024).decode('utf-8')
+            responce[sock] = data
+        except Exception:
+            log.warning(f"Клиент {sock.fileno()} {sock.getpeername()} отключился")
+            all_clients.remove(sock)
+    return responce
+
 
 def valid_message(message):
     '''check message on conformity
@@ -46,9 +55,11 @@ def valid_message(message):
         if message['user'] not in AppConfig.APP_AUTH_USERS:
             return {'response': 403,
                     'error': 'Not authorized'}
-        return {'response':200}
+        return {'response': 200}
     return {'response': 400,
             'error': 'Bad request'}
+
+
 def get_message(client):
     '''get message from client in serrialize it
     :return responce'''
@@ -62,6 +73,7 @@ def get_message(client):
             return responce
         raise ValueError
     raise ValueError
+
 
 @Logs()
 def send_message(work_socket, message):
@@ -97,42 +109,43 @@ def server_start(mode='default'):
     except (IndexError, ValueError) as error:
         log.error(f'Ошибка в указанных аргументах {error}')
 
-    server_socket = socket(AF_INET, SOCK_STREAM)
-    server_socket.bind((IP, PORT))
-    server_socket.listen(AppConfig.APP_CLIENTS_NUMBER)
-    server_socket.listen(5)
-    server_socket.settimeout(0.2)
-
-    log.info(f'Сервер запущен адрес {IP} порт {PORT}')
-
-    while True:
+    with socket(AF_INET, SOCK_STREAM) as server_socket:
+        server_socket.bind((IP, PORT))
+        server_socket.listen(AppConfig.APP_CLIENTS_NUMBER)
+        server_socket.settimeout(0.2)
+    ####
+        log.info(f'Сервер запущен адрес {IP} порт {PORT}')
         print(Fore.GREEN + 'App is started' + Fore.RESET)
-        try:
-            client, client_ip = server_socket.accept()
-        except OSError as error:
-            pass
-        else:
-            log.debug(f'Получен запрос на соединение {client_ip}')
-            all_clients.append(client)
-        finally:
-            time_str = time.ctime(time.time()) + "\n"
-#            log.debug(f'Соединение с клиентом {client_ip}')
-            wait = 1
-            clients_read = []
-            clients_write = []
+
+        while True:
+
             try:
-                clients_read, clients_write, errors = select.select(all_clients, all_clients, [], wait)
+                client, client_ip = server_socket.accept()
+            except OSError as error:
+                pass
+            else:
+                log.info(f'Получен запрос на соединение {client_ip}')
+                all_clients.append(client)
+            finally:
+                time_str = time.ctime(time.time()) + "\n"
+                #            log.debug(f'Соединение с клиентом {client_ip}')
+                wait = 1
+                clients_read = []
+                clients_write = []
+                try:
+                    clients_read, clients_write, errors = select.select(all_clients, all_clients, [], wait)
 
-                ###
+                    ###
 
-                requests = client_query(clients_read, all_clients)
-                print(requests)
-                if requests:
-                    # print(requests)
-                    write_client_query(requests, clients_write, all_clients)
-            except (ValueError, json.JSONDecodeError):
-                log.warning('Получено некорректное сообщение')
-                client.close()
+                    requests = client_query(clients_read, all_clients)
+                    print(requests)
+                    if requests:
+                        # print(requests)
+                        write_client_query(requests, clients_write, all_clients)
+                except (ValueError, json.JSONDecodeError):
+                    log.warning('Получено некорректное сообщение')
+                    client.close()
+
 
 if __name__ == "__main__":
     server_start()

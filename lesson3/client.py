@@ -5,7 +5,7 @@ import sys
 import json
 import logging
 import logs.client_log_config
-from lesson6_dec import Logs
+from lesson6_dec.wrapper import Logs
 
 log = logging.getLogger('client_logger')
 
@@ -76,25 +76,26 @@ def client_connect():
     except (IndexError, ValueError) as error:
         log.error(f'Ошибка в указанных аргументах {error}')
 
-    client_socket = socket(AF_INET, SOCK_STREAM)
-    client_socket.connect((IP, PORT))
-    message = client_active()
-    send_message(client_socket, message)
-    try:
-        responce = get_message(client_socket)
-        log.info(f'Ответ сервера: {responce}')
-        while True:
-            mess_body = str(input('Ваше сообщение: '))
-            if mess_body == 'exit':
-                break
-            message['body'] = mess_body
-            send_message(client_socket, message)
-            responce = get_message(client_socket)
-            if 'body' in responce:
-                print((f"Сервер : {responce['body']}"))
+    with socket(AF_INET, SOCK_STREAM) as client_socket:
 
-    except (ValueError, json.JSONDecodeError):
-        log.error('Ошибка отправки сообщения')
+        client_socket.connect((IP, PORT))
+        message = client_active()
+        send_message(client_socket, message)
+        try:
+            responce = get_message(client_socket)
+            log.info(f'Ответ сервера: {responce}')
+            while True:
+                mess_body = str(input('Ваше сообщение: '))
+                if mess_body == 'exit':
+                    break
+                message['body'] = mess_body
+                send_message(client_socket, message)
+                responce = get_message(client_socket)
+                if 'BODY' in responce:
+                    print((f"Сервер : {responce['BODY']}"))
+
+        except (ValueError, json.JSONDecodeError) as error:
+            log.error('Ошибка отправки сообщения', f'{error}')
 
 if __name__ == "__main__":
     client_connect()
