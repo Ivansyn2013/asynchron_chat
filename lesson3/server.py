@@ -11,7 +11,17 @@ import logs.server_log_config
 
 log = logging.getLogger('server_logger')
 
-
+def process_message(message, names, listen_sockets):
+    if message['DESTINATION'] in names and names[message['DESTINATION']] in listen_sockets:
+        send_message(names[message['DESTINATION']], message)
+        log.info(f'Отправлено сообщение пользователю {message["DESTINATION"]} '
+                    f'от пользователя {message["SENDER"]}.')
+    elif message['DESTINATION'] in names and names[message['DESTINATION']] not in listen_sockets:
+        raise ConnectionError
+    else:
+        log.error(
+            f'Пользователь {message["DESTINATION"]} не зарегистрирован на сервере, '
+            f'отправка сообщения невозможна.')
 def write_client_query(requests, clients_write, all_clients):
     for sock in clients_write:
         if sock in requests:

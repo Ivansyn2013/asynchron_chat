@@ -9,6 +9,8 @@ class AppConfig():
     APP_JIM_DICT = {"action": "",
                     "time": "",
                     "user": "",
+                    "sender": "",
+                    "destination": "",
                     "account_name": "",
                     "response": "",
                     "body": "",
