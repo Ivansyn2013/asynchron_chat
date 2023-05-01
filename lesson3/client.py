@@ -6,13 +6,57 @@ import json
 import logging
 import logs.client_log_config
 from lesson6_dec.wrapper import Logs
+import threading
+from colorama import Fore
 
 log = logging.getLogger('client_logger')
 
+def create_user(username):
+    """Функция генерирует запрос о присутствии клиента"""
+    responce = AppConfig.APP_JIM_DICT
+    responce['action'] = 'presence'
+    responce['time'] = time.time()
+    responce['user'] = username
+
+    log.debug(f'Сформировано {responce} сообщение для пользователя {username}')
+    return responce
+
+def message_from_server(client_socket, username):
+    while True:
+        try:
+            message = get_message(client_socket)
+            if 'ACTION' in message and message["DESTINATION"] == username.upper():
+                print(f'\nПолучено сообщение от пользователя {message["SENDER"]}:'
+                      f'\n{message["BODY"]}')
+                log.info(f'Получено сообщение от пользователя {message["SENDER"]}:'
+                         f'\n{message["BODY"]}')
+            else:
+                log.error(f'Получено некорректное сообщение с сервера: {message}')
+
+        except (OSError, ConnectionError, ConnectionAbortedError,
+                ConnectionResetError, json.JSONDecodeError):
+            log.critical(f'Потеряно соединение с сервером.')
+            break
+
+
+@Logs()
+def user_interface(client_socket, username):
+    while True:
+        message = input(Fore.RESET + '\nВведите сообщение или exit для выхода:\n ')
+        if message == 'exit':
+            log.info('Завершение работы по команде пользователя.')
+            time.sleep(0.5)
+            print('Завершение соединения.')
+            break
+        destination = input('\n Введите получателя:\n')
+        send_message(client_socket, message, username=username, destination=destination)
+
+
 def slots_fun():
     pass
-@Logs()
-def get_message(client):
+
+
+def get_message(client, username='Guest'):
     '''get message from client in serrialize it
     :return responce'''
     package = client.recv(AppConfig.APP_MAX_MESS_SIZE)
@@ -24,14 +68,30 @@ def get_message(client):
         raise ValueError
     raise ValueError
 
+
 @Logs()
-def send_message(work_socket, message):
+def send_message(work_socket, message, username='Guest', destination=None):
     '''encoding and sending messages
     :return'''
     log.debug('Отправка сообщения серверу')
-    json_message = json.dumps(message)
-    package = json_message.encode(AppConfig.APP_ENCODING)
-    work_socket.send(package)
+    if destination == 'server':
+        json_message = json.dumps(message)
+        package = json_message.encode(AppConfig.APP_ENCODING)
+        work_socket.send(package)
+    else:
+        responce = AppConfig.APP_JIM_DICT
+        responce['action'] = 'message'
+        responce['time'] = time.time()
+        responce['user'] = username
+        responce['body'] = message
+        responce['sender'] = username
+        responce['destination'] = destination
+
+        json_message = json.dumps(responce)
+        package = json_message.encode(AppConfig.APP_ENCODING)
+        work_socket.send(package)
+
+
 def client_active(user_name='Guest'):
     '''send online message to server '''
 
@@ -41,6 +101,8 @@ def client_active(user_name='Guest'):
     responce['time'] = time.time()
     responce['user'] = user_name
     return responce
+
+
 @Logs()
 def valid_server_message(message):
     '''check message on conformity'''
@@ -51,6 +113,7 @@ def valid_server_message(message):
         log.info('Отказ сервера')
         return f'400 : {message["error"]}'
     raise ValueError
+
 
 @Logs()
 def client_connect():
@@ -76,26 +139,37 @@ def client_connect():
     except (IndexError, ValueError) as error:
         log.error(f'Ошибка в указанных аргументах {error}')
 
+    print(Fore.GREEN + f'Запущен клиент IP {IP} PORT {PORT}' + Fore.RESET)
     with socket(AF_INET, SOCK_STREAM) as client_socket:
 
         client_socket.connect((IP, PORT))
-        message = client_active()
-        send_message(client_socket, message)
+        # message = client_active()
+        # send_message(client_socket, message)
+        user_name = input("Введите имя пользователя:")
+        present_message = create_user(user_name)
+        send_message(client_socket, username=user_name, message=present_message, destination='server')
         try:
-            responce = get_message(client_socket)
-            log.info(f'Ответ сервера: {responce}')
-            while True:
-                mess_body = str(input('Ваше сообщение: '))
-                if mess_body == 'exit':
-                    break
-                message['body'] = mess_body
-                send_message(client_socket, message)
-                responce = get_message(client_socket)
-                if 'BODY' in responce:
-                    print((f"Сервер : {responce['BODY']}"))
+            receiver = threading.Thread(target=message_from_server, args=(client_socket, user_name))
+            receiver.daemon = True
+            receiver.start()
+            log.debug(f'Запущен поток "клиент на связи"')
 
-        except (ValueError, json.JSONDecodeError) as error:
+            user_interface_thread = threading.Thread(target=user_interface, args=(client_socket, user_name))
+            user_interface_thread.daemon = True
+            user_interface_thread.start()
+            log.debug('Запущен поток отправки сообщений')
+
+            while True:
+                time.sleep(1)
+                if user_interface_thread.is_alive():
+                    continue
+                else:
+                    break
+
+
+        except OSError as error:
             log.error('Ошибка отправки сообщения', f'{error}')
+
 
 if __name__ == "__main__":
     client_connect()
