@@ -6,3 +6,6 @@ def host_range_ping():
 
 def host_range_ping_tab():
     pass
+
+if __name__ == "__main":
+    pass
