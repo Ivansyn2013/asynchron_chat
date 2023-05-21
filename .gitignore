@@ -1,6 +1,8 @@
 # created by virtualenv automatically
-*
+
 Lib
 Scripts
 test*
 venv
+.idea
+__pychache__
